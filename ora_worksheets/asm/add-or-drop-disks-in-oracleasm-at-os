@@ -1,0 +1,29 @@
+============================================================================================================
+=== How to add/drop disks in oracleasm from Operating System.
+============================================================================================================
+
+###–-1) ADDING DISK TO oracleasm from OPERATING SYSTEM.
+
+dd if=/dev/zero of=/dev/cciss/c0d3a1 bs=1024 count=1096
+dd if=/dev/zero of=/dev/cciss/c0d3a2 bs=1024 count=1096
+dd if=/dev/zero of=/dev/cciss/c0d3a3 bs=1024 count=1096
+
+/etc/init.d/oracleasm scandisks
+/etc/init.d/oracleasm listdisks
+
+/etc/init.d/oracleasm createdisk DISK1 /dev/cciss/c0d3a1
+/etc/init.d/oracleasm createdisk DISK2 /dev/cciss/c0d3a2
+/etc/init.d/oracleasm createdisk DISK3 /dev/cciss/c0d3a3
+
+/etc/init.d/oracleasm listdisks
+/etc/init.d/oracleasm scandisks
+/etc/init.d/oracleasm listdisks
+
+###–-2) Delete Disks from Operating System:
+
+/etc/init.d/oracleasm deletedisk DISK1
+/etc/init.d/oracleasm deletedisk DISK2
+/etc/init.d/oracleasm deletedisk DISK3
+/etc/init.d/oracleasm listdisks
+
+============================================================================================================
