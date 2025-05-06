@@ -1,0 +1,54 @@
+============================================================================================================
+=== Add disk to existing ASM Diskgroup.
+============================================================================================================
+1) Check the current available ASM DISKGROUPS.
+
+select name from V$ASM_DISKGROUP;
+
+2) Check the current available Disks.
+
+select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+3) Check the disks at OPERATING SYSTEM level on both nodes..
+
+# /etc/init.d/oracleasm listdisks
+
+4) Add disk to oracleasm at OPERATING SYSTEM level.
+
+/etc/init.d/oracleasm createdisk DATA_DISK5 /dev/mapper/oradata5p1
+
+5) Confirm that disks is successfully added at OPERATING SYSTEM level on both disks.
+
+/etc/init.d/oracleasm listdisks
+
+If you are unable to see the disks on both nodes.
+
+Execute /etc/init.d/oracleasm scandisks on both nodes.
+
+6)  Check the disk from database on both nodes.
+
+select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+7) Add disk to existing ASM DISKGROUP.
+
+If we are using 11g th Connect as sysasm while connecting to ASM.
+
+alter diskgroup SMDEMODB_DATA_EXTERNAL
+add disk 'ORCL.DATA_DISK5'
+rebalance power 0;
+
+8) Check the ASM re-balance status.
+
+select sysdate, GROUP_NUMBER, OPERATION, STATE, POWER, ACTUAL, SOFAR, EST_WORK, EST_RATE, EST_MINUTES
+from v$asm_operation;
+
+9) Start ASM re-balancing.
+
+alter diskgroup SMDEMODB_DATA_EXTERNAL rebalance power 5;
+
+10) Monitor the re-balancing status.
+
+set linesize 190
+select sysdate, GROUP_NUMBER, OPERATION, STATE, POWER, ACTUAL, SOFAR, EST_WORK, EST_RATE, EST_MINUTES from v$asm_operation;
+
+============================================================================================================
