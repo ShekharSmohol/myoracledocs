@@ -1,0 +1,64 @@
+============================================================================================================
+=== Drop disk from existing asm diskgroup. 
+============================================================================================================
+
+1) Check available diskgroups in ASM.
+
+select name from V$ASM_DISKGROUP;
+
+NAME
+------------------------------
+SMDEMODB_CRS_NRL
+SMDEMODB_DATA_EXT
+
+2) Check available disk in DISK group.
+
+SYS@SMDEMODB1> select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+NAME||';'||FAILGROUP||';'||LABEL||';'||PATH
+---------------------------------------------------------------------------------------------
+DATA_DISK1P1;DATA_DISK1P1;DATA_DISK1P1;ORCL:DATA_DISK1P1
+DATA_DISK2P1;DATA_DISK2P1;DATA_DISK2P1;ORCL:DATA_DISK2P1
+DATA_DISK3P1;DATA_DISK3P1;DATA_DISK3P1;ORCL:DATA_DISK3P1
+DATA_DISK4P1;DATA_DISK4P1;DATA_DISK4P1;ORCL:DATA_DISK4P1
+DATA_DISK5P1;DATA_DISK5P1;DATA_DISK5P1;ORCL:DATA_DISK5P1
+DATA_DISK6P1;DATA_DISK6P1;DATA_DISK6P1;ORCL:DATA_DISK6P1
+DATA_DISK7P1;DATA_DISK7P1;DATA_DISK7P1;ORCL:DATA_DISK7P1
+CRS_DISK1P1;CRS_DISK1P1;CRS_DISK1P1;ORCL:CRS_DISK1P1
+CRS_DISK2P1;CRS_DISK2P1;CRS_DISK2P1;ORCL:CRS_DISK2P1
+CRS_DISK3P1;CRS_DISK3P1;CRS_DISK3P1;ORCL:CRS_DISK3P1
+;;CRS_DISK4P1;ORCL:CRS_DISK4P1
+
+3) Check the ASM diskgroup size.
+
+4) Check Disks size in ASM diskgroup.
+
+5) DROP the DISK from ASM diskgroup.
+
+We are going to drop following 2 disk.
+
+If we are using 11g th Connect as sysasm while connecting to ASM.
+
+alter diskgroup SMDEMODB_DATA_EXT 
+	DROP DISK DATA_DISK6P1, DATA_DISK7P1
+REBALANCE POWER 5 wait;
+
+6) Start rebalancing process. 
+
+alter diskgroup SMDEMODB_DATA_EXT rebalance power 5;
+
+-- Check the rebalancing status.
+
+set linesize 132
+select sysdate, GROUP_NUMBER, OPERATION, STATE, POWER, ACTUAL, SOFAR, EST_WORK, EST_RATE, EST_MINUTES
+from v$asm_operation
+
+-- Monitor rebalancing status.
+
+7) Once rebalancing completed execute following SQL to confirm that DISK is removed from database.
+
+select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+Also Check the current allocated space in ASM using asmcmd.
+
+============================================================================================================
