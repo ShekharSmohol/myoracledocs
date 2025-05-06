@@ -1,0 +1,190 @@
+============================================================================================================
+=== CREATE DISK GROUP ON ASM:
+============================================================================================================
+1) Check the current available ASM DISKGROUPS.
+
+select name from V$ASM_DISKGROUP;
+
+SQL> select name from V$ASM_DISKGROUP;
+NAME
+------------------------------
+SMDEMODB_CRS_NRL
+SMDEMODB_DATA_EXT
+SQL>
+
+2) Check the current available Disks.
+
+select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+SQL> select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+NAME||';'||FAILGROUP||';'||LABEL||';'||PATH
+--------------------------------------------------------------------------------
+;;CRS_DISK4P1;ORCL:CRS_DISK4P1
+DATA_DISK1P1;DATA_DISK1P1;DATA_DISK1P1;ORCL:DATA_DISK1P1
+DATA_DISK2P1;DATA_DISK2P1;DATA_DISK2P1;ORCL:DATA_DISK2P1
+DATA_DISK3P1;DATA_DISK3P1;DATA_DISK3P1;ORCL:DATA_DISK3P1
+DATA_DISK4P1;DATA_DISK4P1;DATA_DISK4P1;ORCL:DATA_DISK4P1
+DATA_DISK5P1;DATA_DISK5P1;DATA_DISK5P1;ORCL:DATA_DISK5P1
+CRS_DISK1P1;CRS_DISK1P1;CRS_DISK1P1;ORCL:CRS_DISK1P1
+CRS_DISK2P1;CRS_DISK2P1;CRS_DISK2P1;ORCL:CRS_DISK2P1
+CRS_DISK3P1;CRS_DISK3P1;CRS_DISK3P1;ORCL:CRS_DISK3P1
+9 rows selected.
+SQL>
+
+
+3) Check the disks at OPERATING SYSTEM level on both nodes..
+
+# /etc/init.d/oracleasm listdisks
+
+From Node-1:
+
+[root@SMoraRac1 ~]# /etc/init.d/oracleasm listdisks
+DATA_DISK1P1
+DATA_DISK2P1
+DATA_DISK3P1
+DATA_DISK4P1
+DATA_DISK5P1
+CRS_DISK1P1
+CRS_DISK2P1
+CRS_DISK3P1
+CRS_DISK4P1
+[root@SMoraRac1 ~]#
+
+From Node-2:
+
+[root@SMoraRac2 ~]# /etc/init.d/oracleasm listdisks
+DATA_DISK1P1
+DATA_DISK2P1
+DATA_DISK3P1
+DATA_DISK4P1
+DATA_DISK5P1
+CRS_DISK1P1
+CRS_DISK2P1
+CRS_DISK3P1
+CRS_DISK4P1
+[root@SMoraRac2 ~]#
+
+4) Add disk to oracleasm at OPERATING SYSTEM level.
+
+/etc/init.d/oracleasm createdisk DATA_DISK6P1 /dev/mapper/DISK6p1
+
+[root@SMoraRac1 ~]# /etc/init.d/oracleasm createdisk DATA_DISK6P1 /dev/mapper/DISK6p1
+Marking disk "DATA_DISK6P1" as an ASM disk:             [  OK  ]
+[root@SMoraRac1 ~]#
+
+5) Confirm that disks is successfully added at OPERATING SYSTEM level on both disks.
+
+/etc/init.d/oracleasm listdisks
+
+From Node-1:
+
+[root@SMoraRac1 ~]# /etc/init.d/oracleasm listdisks
+DATA_DISK1P1
+DATA_DISK2P1
+DATA_DISK3P1
+DATA_DISK4P1
+DATA_DISK5P1
+DATA_DISK6P1
+CRS_DISK1P1
+CRS_DISK2P1
+CRS_DISK3P1
+CRS_DISK4P1
+[root@SMoraRac1 ~]#
+
+From Node-2:
+
+[root@SMoraRac1 ~]# /etc/init.d/oracleasm listdisks
+DATA_DISK1P1
+DATA_DISK2P1
+DATA_DISK3P1
+DATA_DISK4P1
+DATA_DISK5P1
+DATA_DISK6P1
+CRS_DISK1P1
+CRS_DISK2P1
+CRS_DISK3P1
+CRS_DISK4P1
+[root@SMoraRac1 ~]#
+
+If you are unable to see the disks on both nodes.
+
+Execute /etc/init.d/oracleasm scandisks on both nodes.
+
+6)  Check the disk from database on both nodes.
+
+select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+SQL> select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+NAME||';'||FAILGROUP||';'||LABEL||';'||PATH
+--------------------------------------------------------------------------------
+;;DATA_DISK6P1;ORCL:DATA_DISK6P1
+;;CRS_DISK4P1;ORCL:CRS_DISK4P1
+DATA_DISK1P1;DATA_DISK1P1;DATA_DISK1P1;ORCL:DATA_DISK1P1
+DATA_DISK2P1;DATA_DISK2P1;DATA_DISK2P1;ORCL:DATA_DISK2P1
+DATA_DISK3P1;DATA_DISK3P1;DATA_DISK3P1;ORCL:DATA_DISK3P1
+DATA_DISK4P1;DATA_DISK4P1;DATA_DISK4P1;ORCL:DATA_DISK4P1
+DATA_DISK5P1;DATA_DISK5P1;DATA_DISK5P1;ORCL:DATA_DISK5P1
+CRS_DISK1P1;CRS_DISK1P1;CRS_DISK1P1;ORCL:CRS_DISK1P1
+CRS_DISK2P1;CRS_DISK2P1;CRS_DISK2P1;ORCL:CRS_DISK2P1
+CRS_DISK3P1;CRS_DISK3P1;CRS_DISK3P1;ORCL:CRS_DISK3P1
+10 rows selected.
+SQL>
+
+============================================================================================================
+=== Create new diskgroup in ASM (EXTERNAL REDUNDANCY)
+============================================================================================================
+##--Check the current available ASM DISKGROUPS.
+
+sudo su - grid
+. oraenv +ASM1
+select name from V$ASM_DISKGROUP;
+
+##-Check the current available Disks.
+select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+
+##--Create SMDEMODB_DATA_DISK
+
+CREATE DISKGROUP SMDEMODB_DATA_EXT
+EXTERNAL REDUNDANCY 
+DISK '/dev/oracleasm/disks/DATA_DISK1','/dev/oracleasm/disks/DATA_DISK2'
+ATTRIBUTE 'compatible.asm' = '12.1', 'compatible.rdbms' = '10.1'
+REBALANCE POWER 5 wait; 
+
+##-Check the new Diskgroup in asm.
+select name from V$ASM_DISKGROUP;
+
+
+SQL> select name from V$ASM_DISKGROUP;
+NAME
+------------------------------
+CRS_DATA
+SQL>
+
+SQL> select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
+NAME||';'||FAILGROUP||';'||LABEL||';'||PATH
+--------------------------------------------------------------------------------
+;;;/dev/oracleasm/disks/DATA_DISK2
+;;;/dev/oracleasm/disks/DATA_DISK1
+CRS_DATA_0000;CRS_DATA_0000;;/dev/oracleasm/disks/CRS_DISK1
+SQL>
+
+SQL> CREATE DISKGROUP SMDEMODB_DATA_EXT
+EXTERNAL REDUNDANCY 
+DISK '/dev/oracleasm/disks/DATA_DISK1','/dev/oracleasm/disks/DATA_DISK2';   2    3  
+Diskgroup created.
+SQL>
+SQL>  select name from V$ASM_DISKGROUP;
+NAME
+------------------------------
+CRS_DATA
+SMDEMODB_DATA_EXT
+SQL>
+
+ASMCMD> lsdg
+State    Type    Rebal  Sector  Block       AU  Total_MB  Free_MB  Req_mir_free_MB  Usable_file_MB  Offline_disks  Voting_files  Name
+MOUNTED  EXTERN  N         512   4096  1048576      4094     3797                0            3797              0             Y  CRS_DATA/
+MOUNTED  EXTERN  N         512   4096  1048576     10228    10176                0           10176              0             N  SMDEMODB_DATA_EXT/
+ASMCMD> 
+
+============================================================================================================
