@@ -1,0 +1,64 @@
+============================================================================================================
+== Drop ASM Diskgroup:
+============================================================================================================
+ASMCMD> lsdg
+State    Type    Rebal  Sector  Block       AU  Total_MB  Free_MB  Req_mir_free_MB  Usable_file_MB  Offline_disks  Voting_files  Name
+MOUNTED  NORMAL  N         512   4096  1048576      3069     2143             1023             560              0             Y  SMDEMODB_CRS_NRL/
+MOUNTED  EXTERN  N         512   4096  1048576   5271503  2538076                0         2538076              0             N  SMDEMODB_DATA_EXT_1/
+MOUNTED  NORMAL  N         512   4096  1048576    563191   562983                0          281491              0             N  SMDEMODB_DATA_EXT_2/
+ASMCMD>
+
+Drop diskgroup : SMDEMODB_DATA_EXT_2
+
+set linesize 190
+select name, group_number, name, type, state, total_mb, free_mb from v$asm_diskgroup;
+select name, group_number, name, type, state, total_mb, free_mb from v$asm_diskgroup where NAME='SMDEMODB_DATA_EXT_2' ;
+
+NAME                           GROUP_NUMBER NAME                           TYPE   STATE         TOTAL_MB    FREE_MB
+------------------------------ ------------ ------------------------------ ------ ----------- ---------- ----------
+SMDEMODB_DATA_EXT_2                       3 SMDEMODB_DATA_EXT_2              NORMAL MOUNTED         563191     562983
+
+set linesize 190
+col path format A30
+select group_number, disk_number, name, failgroup, create_date, path, total_mb from v$asm_disk; 
+select group_number, disk_number, name, failgroup, create_date, path, total_mb from v$asm_disk where group_number=3; 
+
+GROUP_NUMBER DISK_NUMBER NAME                           FAILGROUP                      CREATE_DA PATH                           TOTAL_MB
+------------ ----------- ------------------------------ ------------------------------ --------- ------------------------------ ----------
+           3           0 DATA_DISK7                	DATA_DISK7                	17-DEC-12 ORCL:DATA_DISK7               511992
+           3           1 DATA_DISK8                 	DATA_DISK8                	17-DEC-12 ORCL:DATA_DISK8           	51199
+
+ 	
+From node2: 
+
+sqlplus '/as sysasm'
+alter diskgroup SMDEMODB_DATA_EXT_2 dismount; 
+
+From node-1
+DROP DISKGROUP SMDEMODB_DATA_EXT_2 INCLUDING CONTENTS;
+
+============================================================================================================
+=== Now add disk to 'SMDEMODB_DATA_EXT_1' diskgroup. 
+============================================================================================================
+
+Add disks in SMDEMODB_DATA_EXT_1
+
+alter diskgroup SMDEMODB_DATA_EXT_1
+add disk 'ORCL:DATA_DISK7'
+rebalance power 0;
+
+alter diskgroup SMDEMODB_DATA_EXT_1
+add disk 'ORCL:DATA_DISK8'
+rebalance power 0;
+
+
+alter diskgroup SMDEMODB_DATA_EXT_1 rebalance power 20;
+
+-- Check the rebalancing status.
+
+set linesize 132
+select sysdate, GROUP_NUMBER, OPERATION, STATE, POWER, ACTUAL, SOFAR, EST_WORK, EST_RATE, EST_MINUTES
+from v$asm_operation
+
+============================================================================================================
+=== End of file:
