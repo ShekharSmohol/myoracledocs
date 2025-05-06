@@ -1,16 +1,9 @@
 ============================================================================================================
 === CREATE DISK GROUP ON ASM:
 ============================================================================================================
-1) Check the current available ASM DISKGROUPS.
+1) Check the current available ASM DISKGROUPS. (If any).
 
 select name from V$ASM_DISKGROUP;
-
-SQL> select name from V$ASM_DISKGROUP;
-NAME
-------------------------------
-SMDEMODB_CRS_NRL
-SMDEMODB_DATA_EXT
-SQL>
 
 2) Check the current available Disks.
 
@@ -64,11 +57,11 @@ CRS_DISK3P1
 CRS_DISK4P1
 [root@SMoraRac2 ~]#
 
-4) Add disk to oracleasm at OPERATING SYSTEM level.
+4) Add new disk to oracleasm at OPERATING SYSTEM level.
 
-/etc/init.d/oracleasm createdisk DATA_DISK6P1 /dev/mapper/DISK6p1
+/etc/init.d/oracleasm createdisk DATA_DISK6P1 /dev/mapper/DISK6P1
 
-[root@SMoraRac1 ~]# /etc/init.d/oracleasm createdisk DATA_DISK6P1 /dev/mapper/DISK6p1
+[root@SMoraRac1 ~]# /etc/init.d/oracleasm createdisk DATA_DISK6P1 /dev/mapper/DISK6P1
 Marking disk "DATA_DISK6P1" as an ASM disk:             [  OK  ]
 [root@SMoraRac1 ~]#
 
@@ -147,7 +140,7 @@ select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
 
 CREATE DISKGROUP SMDEMODB_DATA_EXT
 EXTERNAL REDUNDANCY 
-DISK '/dev/oracleasm/disks/DATA_DISK1','/dev/oracleasm/disks/DATA_DISK2'
+DISK '/dev/oracleasm/disks/DATA_DISK1P1','/dev/oracleasm/disks/DISK2P1'
 ATTRIBUTE 'compatible.asm' = '12.1', 'compatible.rdbms' = '10.1'
 REBALANCE POWER 5 wait; 
 
@@ -158,16 +151,14 @@ select name from V$ASM_DISKGROUP;
 SQL> select name from V$ASM_DISKGROUP;
 NAME
 ------------------------------
-CRS_DATA
+SMDEMODB_CRS_DATA
 SQL>
 
 SQL> select NAME||';'||FAILGROUP||';'||LABEL||';'||PATH from v$asm_disk;
 NAME||';'||FAILGROUP||';'||LABEL||';'||PATH
 --------------------------------------------------------------------------------
-;;;/dev/oracleasm/disks/DATA_DISK2
-;;;/dev/oracleasm/disks/DATA_DISK1
-CRS_DATA_0000;CRS_DATA_0000;;/dev/oracleasm/disks/CRS_DISK1
-SQL>
+;;;/dev/oracleasm/disks/DATA_DISK1P1
+;;;/dev/oracleasm/disks/DATA_DISK2P1
 
 SQL> CREATE DISKGROUP SMDEMODB_DATA_EXT
 EXTERNAL REDUNDANCY 
@@ -177,13 +168,13 @@ SQL>
 SQL>  select name from V$ASM_DISKGROUP;
 NAME
 ------------------------------
-CRS_DATA
+SMDEMODB_CRS_DATA
 SMDEMODB_DATA_EXT
 SQL>
 
 ASMCMD> lsdg
 State    Type    Rebal  Sector  Block       AU  Total_MB  Free_MB  Req_mir_free_MB  Usable_file_MB  Offline_disks  Voting_files  Name
-MOUNTED  EXTERN  N         512   4096  1048576      4094     3797                0            3797              0             Y  CRS_DATA/
+MOUNTED  EXTERN  N         512   4096  1048576      4094     3797                0            3797              0             Y  SMDEMODB_CRS_DATA/
 MOUNTED  EXTERN  N         512   4096  1048576     10228    10176                0           10176              0             N  SMDEMODB_DATA_EXT/
 ASMCMD> 
 
