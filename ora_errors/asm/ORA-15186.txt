@@ -1,0 +1,55 @@
+----------------------------------------------------------------------------------------------------------------------
+---ORA-15186: ASMLIB error function = [asm_open],  error = [1],  mesg = [Operation not permitted]
+----------------------------------------------------------------------------------------------------------------------
+PILLAR: OEL 4.5 ASMLib / ASM error ORA-15186: ASMLIB asm_open Operation not permitted
+
+Issue
+ORACLE ASM reports the following error message in the ASM alert log file:
+
+ORA-15186: ASMLIB error function = [asm_open],  error = [1],  mesg = [Operation not permitted]
+
+v$asm_disk.header_status shows "UNKNOWN"
+
+you cannot create ASM DISKGROUP on top of ASMLib disks that were created using 
+the following command:
+
+   /etc/init.d/oracleasm createdisk <NAME> /dev/mapper/<device_name>
+
+You are using Pillar AXIOM-500 SAN Storage
+
+
+-----------------------------
+--Solution:
+-----------------------------
+
+Solution
+Setup ASMLib multipath to work with AXIOM-500:
+
+cp -p /etc/udev/rules.d/50-udev.rules /etc/udev/rules.d/50-udev.rules.bak
+vi /etc/udev/rules.d/50-udev.rules
+------------ uncomment the following line -----------
+# create a symlink named after the device map name
+# note devmap_name comes with extras/multipath
+KERNEL="dm-[0-9]*", PROGRAM="/sbin/devmap_name %M %m", NAME="%k", SYMLINK="%c"
+
+
+cp -p /etc/sysconfig/oracleasm /etc/sysconfig/oracleasm.bak
+vi /etc/sysconfig/oracleasm
+------- edit as follows --------
+ORACLEASM_SCANORDER="dm"
+
+## reboot both nodes to create dm links to devices
+reboot
+
+## verify dm-* path was created after the reboot
+ls -l /dev/dm*
+
+## setup asm_diskstring to ORCL:
+alter system set asm_diskstring='ORCL:*' scope=both;
+
+You should now be able to create ASM DISKGROUP and v$asm_disk.header_status 
+should now read "PROVISIONED"
+
+----------------------------------------------------------------------------------------------------------------------
+--- End of file. 
+----------------------------------------------------------------------------------------------------------------------
