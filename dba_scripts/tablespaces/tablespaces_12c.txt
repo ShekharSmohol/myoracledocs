@@ -1,0 +1,100 @@
+=======================================================================================================================
+===Tablespace in 12c.
+=======================================================================================================================
+
+##########################################
+##-- List the tablespaces from PDB
+##########################################
+
+set linesize 190
+COLUMN PDB_ID FORMAT 999
+COLUMN PDB_NAME FORMAT A8
+COLUMN FILE_ID FORMAT 9999
+COLUMN TABLESPACE_NAME FORMAT A10
+COLUMN FILE_NAME FORMAT A90
+
+SELECT 	p.PDB_ID, 
+	      p.PDB_NAME, 
+	      d.FILE_ID, 
+	      d.TABLESPACE_NAME, 
+	      d.FILE_NAME
+FROM 	  DBA_PDBS p, 
+	      CDB_DATA_FILES d
+WHERE 	p.PDB_ID = d.CON_ID
+  	    ORDER BY p.PDB_ID;
+
+##########################################
+##-- List the TEMP tablespaces from CDB
+##########################################
+
+COLUMN CON_ID FORMAT 999
+COLUMN FILE_ID FORMAT 9999
+COLUMN TABLESPACE_NAME FORMAT A15
+COLUMN FILE_NAME FORMAT A45
+
+SELECT 	CON_ID, 
+	      FILE_ID, 
+	      TABLESPACE_NAME, 
+	      FILE_NAME
+FROM 	    CDB_TEMP_FILES
+ORDER     BY CON_ID;
+
+##########################################
+##-- List Tablespace Usage for 12c Database. 
+##########################################
+
+set pages 80
+set lin 120
+set echo off
+set feed off
+column PCT format 999.99
+column tbspce format A30
+col container for a30
+select substr(f.tablespace_name,1,30) tbspce,
+     round(f.tsbytes/(1024*1024),0) "ALLOCATED(MB)",
+     round(f.tsbytes/(1024*1024*1024),0) "ALLOCATED(GB)",
+     round(nvl(s.segbytes,0)/(1024*1024),0) "USED(MB)",
+     round(nvl(s.segbytes,0)/(1024*1024*1024),0) "USED(GB)",
+     round((nvl(s.segbytes,0)/f.tsbytes)*100,2) PCT,
+     lower(vc.name) as container
+from
+   (select con_id,tablespace_name,sum(bytes) tsbytes from cdb_data_files group by con_id,tablespace_name) f,
+   (select con_id,tablespace_name,sum(bytes) segbytes from cdb_segments group by con_id,tablespace_name) s,
+   v$containers vc
+where f.con_id=s.con_id(+)
+  and f.tablespace_name=s.tablespace_name
+  and f.con_id=vc.con_id
+order by container, tbspce;
+
+##########################################
+##-- List Tablespace Usage for 12c Database. (With FREE GB)
+##########################################
+
+set pages 80
+set lin 180
+set echo off
+set feed off
+column PCT format 999.99
+column tbspce format A30
+col container for a30
+select substr(f.tablespace_name,1,30) tbspce,
+     round(f.tsbytes/(1024*1024),0) "ALLOCATED(MB)",
+     round(f.tsbytes/(1024*1024*1024),0) "ALLOCATED(GB)",
+     round(nvl(s.segbytes,0)/(1024*1024),0) "USED(MB)",
+     round(nvl(s.segbytes,0)/(1024*1024*1024),0) "USED(GB)",
+	 round(f.tsbytes/(1024*1024*1024),0) - round(nvl(s.segbytes,0)/(1024*1024*1024),0) "Free (GB)",
+     round((nvl(s.segbytes,0)/f.tsbytes)*100,2) PCT,
+     lower(vc.name) as container
+from
+   (select con_id,tablespace_name,sum(bytes) tsbytes from cdb_data_files group by con_id,tablespace_name) f,
+   (select con_id,tablespace_name,sum(bytes) segbytes from cdb_segments group by con_id,tablespace_name) s,
+   v$containers vc
+where f.con_id=s.con_id(+)
+  and f.tablespace_name=s.tablespace_name
+  and f.tablespace_name='USERS'
+  and f.con_id=vc.con_id
+order by container, tbspce;
+
+=======================================================================================================================
+===End of file
+======================================================================================================================= 
