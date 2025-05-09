@@ -1,0 +1,148 @@
+------------------------------------------------------------------------------------------------------------
+--- datafiles:
+------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------
+--- Oracle 12c:
+------------------------------------------------------------------------------------------------------------
+
+select name,open_mode from v$Pdbs;
+
+##########################################
+##-- List datafiles for all databases.
+##########################################
+
+set linesize 190
+col ERROR format A10
+col NAME format A100
+select 	a.con_id,
+	a.file#,
+	a.name,
+	b.error 
+from 	v$datafile a,
+	v$datafile_header b 
+where 	a.file#=b.file#;
+
+
+##########################################
+##-- List the Data Files for Each PDB in a CDB
+##########################################
+
+COLUMN PDB_ID FORMAT 999
+COLUMN PDB_NAME FORMAT A8
+COLUMN FILE_ID FORMAT 9999
+COLUMN TABLESPACE_NAME FORMAT A10
+COLUMN FILE_NAME FORMAT A90
+
+SELECT 	p.PDB_ID, 
+	p.PDB_NAME, 
+	d.FILE_ID, 
+	d.TABLESPACE_NAME, 
+	d.FILE_NAME
+FROM 	DBA_PDBS p, 
+	CDB_DATA_FILES d
+WHERE 	p.PDB_ID = d.CON_ID
+ORDER 	BY p.PDB_ID;
+
+
+##########################################
+##-- Check Free space in datafile by tablespace
+##########################################
+
+set linesize 190
+set pagesize 190
+ALTER SESSION SET nls_sort=binary;
+ALTER SESSION SET nls_comp=binary;
+select name from v$database;
+
+set linesize 190
+col FILE_NAME format A80
+select d.tablespace_name, d.file_id, d.file_name, d.bytes allocated,nvl(f.bytes,0) free
+from (select tablespace_name, file_id, file_name, sum(bytes)/1024/1024/1024 bytes from dba_data_files
+     group by tablespace_name, file_id, file_name) d,
+     (select tablespace_name, file_id, sum(bytes)/1024/1024/1024 bytes from dba_free_space
+     group by tablespace_name, file_id) f
+  where d.tablespace_name in ('USERS')
+  and d.tablespace_name = f.tablespace_name(+)
+  and d.file_id = f.file_id(+)
+order by tablespace_name, file_id;
+
+##########################################
+##-- ADD DATAFILES FOR ALL TABLESPACES IN ASM.
+##########################################
+
+---------------------------------
+-- Example - 01
+---------------------------------
+
+select 'alter tablespace '''||tablespace_name||''' add datafile size 5g ;' from dba_tablespaces 
+select 'alter tablespace '''||tablespace_name||''' add datafile size 30g ;' from dba_data_files;
+
+SQL> select 'alter tablespace '''||tablespace_name||''' add datafile size 30g ;' from dba_data_files;
+
+'ALTERTABLESPACE'''||TABLESPACE_NAME||'''ADDDATAFILESIZE30G;'
+-------------------------------------------------------------------------
+alter tablespace 'USERS' add datafile size 30g ;
+alter tablespace 'SYSAUX' add datafile size 30g ;
+alter tablespace 'UNDOTBS1' add datafile size 30g ;
+alter tablespace 'SYSTEM' add datafile size 30g ;
+alter tablespace 'UNDOTBS2' add datafile size 30g ;
+SQL>
+
+------------------------------------------------------------------------------------------------------------
+--- TO RE-SIZE ALL DATAFILES IN ASM
+------------------------------------------------------------------------------------------------------------
+
+set linesize 132
+select 'Alter database datafile '''||file_name||''' resize 30g ;' from dba_data_files;
+
+SQL> set linesize 132
+SQL> select 'Alter database datafile '''||file_name||''' resize 30g ;' from dba_data_files;
+
+'ALTERDATABASEDATAFILE'''||FILE_NAME||'''RESIZE30G;'
+-----------------------------------------------------------------------------------------------------------
+Alter database datafile '+SSMDB_NORMAL/ssmdb/datafile/users.6135.728689109' resize 30g ;
+Alter database datafile '+SSMDB_NORMAL/ssmdb/datafile/sysaux.6125.728689109' resize 30g ;
+Alter database datafile '+SSMDB_NORMAL/ssmdb/datafile/undotbs1.6124.728689109' resize 30g ;
+Alter database datafile '+SSMDB_NORMAL/ssmdb/datafile/system.6104.728689109' resize 30g ;
+Alter database datafile '+SSMDB_NORMAL/ssmdb/datafile/undotbs2.6199.728689199' resize 30g ;
+
+SQL>
+
+------------------------------------------------------------------------------------------------------------
+--- Autoextend on 
+------------------------------------------------------------------------------------------------------------
+
+If we are not using "AUTOEXTEND ON" for data files then it’s our responsibility to make sure that
+there is always space for each datafile.
+
+-- To set AUTOEXTEND ON on for one datafile:
+
+col FILE_NAME format A80
+set linesize 132
+select FILE_NAME,TABLESPACE_NAME,AUTOEXTENSIBLE from dba_data_files where AUTOEXTENSIBLE='NO';
+
+FILE_NAME                                                    TABLESPACE_NAME                AUT
+------------------------------------------------------------ ------------------------------ ---
++DATA1/DEMODB/datafile/users.8623.759003829        	     USERS                          NO
+
+SYS> alter database datafile ' DATA1/DEMODB/datafile/users.8623.759003829' AUTOEXTEND ON ;
+Database altered.
+SYS>
+
+-- To set AUTOEXTEND ON for all datafile.
+
+spool autoextend-on-for-all-datafile.sql
+select 'Alter database datafile '''||file_name||''' autoextend on ;' from dba_data_files where AUTOEXTENSIBLE='NO';
+spool off
+
+Execute @autoextend-on-for-all-datafile.sql
+
+-- To Add datafile for each tablespace with AUTOEXTEND ON:
+
+select 'alter tablespace '||tablespace_name||' '||'add datafile size 50M autoextend on ;' from dba_data_files;
+
+
+------------------------------------------------------------------------------------------------------------
+--- End of File
+------------------------------------------------------------------------------------------------------------
