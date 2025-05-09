@@ -6,7 +6,6 @@
 ###--Create Tablespaces
 ##############################################
 
---Create tablespace:
 create tablespace MY_DATA
 datafile '/u01/oradata/DEMODB/MY_DATA.dbf'
 size  10G 			-- Fixed datafile size
@@ -21,7 +20,10 @@ ASSM - Automatic segment space management (ASSM)
 We cannot create the SYSTEM tablespace with automatic segment space management. 
 Also, the ASSM feature is valid only for permanent, locally managed tablespaces.
 
---Create BIGFILE tablespace:
+##############################################
+###--Create BIGFILE tablespace:
+##############################################
+
 create bigfile tablespace MY_DATA
 datafile '/u01/oradata/DEMODB/MY_DATA.dbf'
 size 10g
@@ -55,7 +57,6 @@ SELECT tablespace_name,
        status
 FROM   dba_tablespaces
 ORDER BY tablespace_name;
-
 
 ##############################################
 ###--- Displays information about datafiles 
