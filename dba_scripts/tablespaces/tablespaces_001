@@ -7,8 +7,8 @@
 ##############################################
 
 --Create tablespace:
-create tablespace OAS_PRIMARY
-datafile '/u01/oradata/DEMODB/OAS_PRIMARY.dbf'
+create tablespace MY_DATA
+datafile '/u01/oradata/DEMODB/MY_DATA.dbf'
 size  10G 			-- Fixed datafile size
 extent management local 	-- Locally managed
 uniform size 128k 		-- Uniform extent size
@@ -22,8 +22,8 @@ We cannot create the SYSTEM tablespace with automatic segment space management.
 Also, the ASSM feature is valid only for permanent, locally managed tablespaces.
 
 --Create BIGFILE tablespace:
-create bigfile tablespace OAS_PRIMARY
-datafile '/u01/oradata/DEMODB/OAS_PRIMARY.dbf'
+create bigfile tablespace MY_DATA
+datafile '/u01/oradata/DEMODB/MY_DATA.dbf'
 size 10g
 extent management local
 uniform size 128k
