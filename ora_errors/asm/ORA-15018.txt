@@ -1,0 +1,54 @@
+----------------------------------------------------------------------------------------------------------------------
+---ORA-15018: diskgroup cannot be created
+---ORA-15238: 12.1 is not a valid value for attribute compatible.advm
+---ORA-15477: cannot communicate with the volume driver
+----------------------------------------------------------------------------------------------------------------------
+
+SQL> CREATE DISKGROUP DEMODB_DATA_EXT
+EXTERNAL REDUNDANCY 
+DISK '/dev/oracleasm/disks/DATA_DISK1','/dev/oracleasm/disks/DATA_DISK2'
+ATTRIBUTE 'compatible.asm' = '12.1', 'compatible.rdbms' = '12.1', 'compatible.advm' = '12.1';
+2    3    4  CREATE DISKGROUP DEMODB_DATA_EXT
+*
+ERROR at line 1:
+ORA-15018: diskgroup cannot be created
+ORA-15238: 12.1 is not a valid value for attribute compatible.advm
+ORA-15477: cannot communicate with the volume driver
+SQL>
+
+-----------------------------
+Cause:
+-----------------------------
+
+Metalink Note: 
+Bug 16227068 - ASM cannot create diskgroup with compatible.advm = 12.1.0.1.0 (Doc ID 16227068.8)
+
+Bug 16227068  ASM cannot create diskgroup with compatible.advm = 12.1.0.1.0
+
+-----------------------------
+-- Workaround: 
+-----------------------------
+NONE:
+
+-----------------------------
+--Solution:
+-----------------------------
+
+Remove 'compatible.advm' ATTRIBUTE while creating diskgroup in 12.1 ASM.
+
+SQL> CREATE DISKGROUP DEMODB_DATA_EXT
+EXTERNAL REDUNDANCY 
+DISK '/dev/oracleasm/disks/DATA_DISK1','/dev/oracleasm/disks/DATA_DISK2'
+ATTRIBUTE 'compatible.asm' = '12.1', 'compatible.rdbms' = '10.1';
+REBALANCE POWER 5 wait;   2    3    4  
+
+Diskgroup created.
+
+SQL> alter DISKGROUP DEMODB_DATA_EXT REBALANCE POWER 5 wait;
+Diskgroup altered.
+SQL>
+
+----------------------------------------------------------------------------------------------------------------------
+--- End of file.
+----------------------------------------------------------------------------------------------------------------------
+
