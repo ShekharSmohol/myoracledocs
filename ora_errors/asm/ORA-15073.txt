@@ -1,0 +1,28 @@
+----------------------------------------------------------------------------------------------------------------------
+---ORA-15073: diskgroup DEMODB_DATA_EXT is mounted by another ASM instance
+---ORA-15039: diskgroup not dropped
+----------------------------------------------------------------------------------------------------------------------
+
+-- Disk groups can be deleted using the DROP DISKGROUP statement.
+
+select name,total_mb,free_mb,state from v$asm_diskgroup;
+DROP DISKGROUP DEMODB_DATA_EXT INCLUDING CONTENTS;
+
+SQL> DROP DISKGROUP DEMODB_DATA_EXT INCLUDING CONTENTS;
+DROP DISKGROUP DEMODB_DATA_EXT INCLUDING CONTENTS
+*
+ERROR at line 1:
+ORA-15039: diskgroup not dropped
+ORA-15073: diskgroup DEMODB_DATA_EXT is mounted by another ASM instance
+
+SQL>
+
+###Shutdown the ASM instance from Node2 and then re-run the DROP DISKGROUP from node1:
+
+SQL> DROP DISKGROUP DEMODB_DATA_EXT INCLUDING CONTENTS;
+Diskgroup dropped.
+SQL>
+
+----------------------------------------------------------------------------------------------------------------------
+-- End of file. 
+----------------------------------------------------------------------------------------------------------------------
