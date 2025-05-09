@@ -1,0 +1,190 @@
+=======================================================================================================================
+=== TableSpaces In Oracle
+=======================================================================================================================
+
+##############################################
+###--Create Tablespaces
+##############################################
+
+--Create tablespace:
+create tablespace OAS_PRIMARY
+datafile '/u01/oradata/DEMODB/OAS_PRIMARY.dbf'
+size  10G 			-- Fixed datafile size
+extent management local 	-- Locally managed
+uniform size 128k 		-- Uniform extent size
+segment space management auto 	-- ASSM
+
+As of Oracle Database 11g R2, the EXTENT MANAGEMENT DICTIONARY clause has been deprecated.
+
+ASSM - Automatic segment space management (ASSM)
+
+We cannot create the SYSTEM tablespace with automatic segment space management. 
+Also, the ASSM feature is valid only for permanent, locally managed tablespaces.
+
+--Create BIGFILE tablespace:
+create bigfile tablespace OAS_PRIMARY
+datafile '/u01/oradata/DEMODB/OAS_PRIMARY.dbf'
+size 10g
+extent management local
+uniform size 128k
+segment space management auto
+/
+
+##############################################
+###--View tablespace Details. 
+##############################################
+
+##--Check extent_management/BIGFILE for tablespace. 
+SET LINESIZE 200 
+select	tablespace_name
+	,extent_management
+	,segment_space_management
+	,BIGFILE
+from 	dba_tablespaces;
+
+##############################################
+###--Displays information about tablespaces.
+##############################################
+
+SET LINESIZE 200
+SELECT tablespace_name,
+       block_size,
+       extent_management,
+       allocation_type,
+       segment_space_management,
+       status
+FROM   dba_tablespaces
+ORDER BY tablespace_name;
+
+
+##############################################
+###--- Displays information about datafiles 
+for the specified tablespace.
+##############################################
+
+SET LINESIZE 200
+COLUMN file_name FORMAT A70
+
+SELECT file_id,
+       file_name,
+       ROUND(bytes/1024/1024/1024) AS size_gb,
+       ROUND(maxbytes/1024/1024/1024) AS max_size_gb,
+       autoextensible,
+       increment_by,
+       status
+FROM   dba_data_files
+--WHERE  tablespace_name = UPPER('&1')
+ORDER BY file_id;
+
+##############################################
+####--- Displays a list of tablespaces 
+and their used/full status.
+##############################################
+
+SET PAGESIZE 180
+COLUMN used_pct FORMAT A11
+
+SELECT tablespace_name,
+       size_mb,
+       free_mb,
+       max_size_mb,
+       max_free_mb,
+       TRUNC((max_free_mb/max_size_mb) * 100) AS free_pct,
+       RPAD(' '|| RPAD('X',ROUND((max_size_mb-max_free_mb)/max_size_mb*10,0), 'X'),11,'-') AS used_pct
+FROM   (
+        SELECT a.tablespace_name,
+               b.size_mb,
+               a.free_mb,
+               b.max_size_mb,
+               a.free_mb + (b.max_size_mb - b.size_mb) AS max_free_mb
+        FROM   (SELECT tablespace_name,
+                       TRUNC(SUM(bytes)/1024/1024) AS free_mb
+                FROM   dba_free_space
+                GROUP BY tablespace_name) a,
+               (SELECT tablespace_name,
+                       TRUNC(SUM(bytes)/1024/1024) AS size_mb,
+                       TRUNC(SUM(GREATEST(bytes,maxbytes))/1024/1024) AS max_size_mb
+                FROM   dba_data_files
+                GROUP BY tablespace_name) b
+        WHERE  a.tablespace_name = b.tablespace_name
+       )
+ORDER BY tablespace_name;
+
+SET PAGESIZE 14
+
+##############################################
+#####---Displays a list of tablespaces 
+and their used/full status.
+##############################################
+
+SET PAGESIZE 140
+SET LINESIZE 180
+COLUMN used_pct FORMAT A11
+COL TABLESPACE_NAME format A30
+
+SELECT tablespace_name,
+       size_mb,
+       free_mb,
+       max_size_mb,
+       max_free_mb,
+       TRUNC((max_free_mb/max_size_mb) * 100) AS free_pct,
+       RPAD(' '|| RPAD('X',ROUND((max_size_mb-max_free_mb)/max_size_mb*10,0), 'X'),11,'-') AS used_pct
+FROM   (
+        SELECT a.tablespace_name,
+               b.size_mb,
+               a.free_mb,
+               b.max_size_mb,
+               a.free_mb + (b.max_size_mb - b.size_mb) AS max_free_mb
+        FROM   (SELECT tablespace_name,
+                       TRUNC(SUM(bytes)/1024/1024) AS free_mb
+                FROM   dba_free_space
+                GROUP BY tablespace_name) a,
+               (SELECT tablespace_name,
+                       TRUNC(SUM(bytes)/1024/1024) AS size_mb,
+                       TRUNC(SUM(GREATEST(bytes,maxbytes))/1024/1024) AS max_size_mb
+                FROM   dba_data_files
+                GROUP BY tablespace_name) b
+        WHERE  a.tablespace_name = b.tablespace_name
+       )
+---WHERE tablespace_name in ('SYSTEM','SYSAUX')
+ORDER BY tablespace_name;
+
+
+##############################################
+##-- Displays a list of tablespaces that are nearly full.
+##############################################
+
+SET PAGESIZE 100
+
+PROMPT Tablespaces nearing 0% free
+PROMPT ***************************
+SELECT tablespace_name,
+       size_mb,
+       free_mb,
+       max_size_mb,
+       max_free_mb,
+       TRUNC((max_free_mb/max_size_mb) * 100) AS free_pct
+FROM   (
+        SELECT a.tablespace_name,
+               b.size_mb,
+               a.free_mb,
+               b.max_size_mb,
+               a.free_mb + (b.max_size_mb - b.size_mb) AS max_free_mb
+        FROM   (SELECT tablespace_name,
+                       TRUNC(SUM(bytes)/1024/1024) AS free_mb
+                FROM   dba_free_space
+                GROUP BY tablespace_name) a,
+               (SELECT tablespace_name,
+                       TRUNC(SUM(bytes)/1024/1024) AS size_mb,
+                       TRUNC(SUM(GREATEST(bytes,maxbytes))/1024/1024) AS max_size_mb
+                FROM   dba_data_files
+                GROUP BY tablespace_name) b
+        WHERE  a.tablespace_name = b.tablespace_name
+       )
+WHERE  ROUND((max_free_mb/max_size_mb) * 100,2) < 10;
+
+SET PAGESIZE 14
+
+=======================================================================================================================
+=== End of file. 
+=======================================================================================================================
