@@ -1,0 +1,17 @@
+===========================================================================================================================
+=== Active-Passive Setup. 
+===========================================================================================================================
+
+########################################################
+##-- Metakink Notes:
+########################################################
+
+How To Setup ASM (11.2 & 12.1) On An Active/Passive Cluster (Non-RAC).(Doc ID 1296124.1)
+How To Setup ASM (10.2 & 11.1) On An Active/Passive Cluster (Non-RAC).(Doc ID 1319050.1)
+How To Install An Oracle Database In An Active/Passive Configuration Without RAC?(Doc ID 734361.1)
+Does Oracle certify or validate third party cluster solutions (Failover or Active/Passive Clustering) for the Oracle Single Instance Database (no RAC)? (Doc ID 1488476.1)	
+
+
+===========================================================================================================================
+=== End of file. 
+===========================================================================================================================
